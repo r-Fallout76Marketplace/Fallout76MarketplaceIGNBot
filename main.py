@@ -134,7 +134,7 @@ def account_age_readable_form(account_created):
 # Send message to discord channel
 def send_message_to_discord(message_param):
     webhook = os.getenv('ERROR_CHANNEL')
-    data = {"content": message_param, "username": 'UserVerificationBot'}
+    data = {"content": message_param, "username": 'IGNBot'}
     output = requests.post(webhook, data=json.dumps(data), headers={"Content-Type": "application/json"})
     output.raise_for_status()
 
@@ -183,10 +183,8 @@ failed_attempt = 1
 while True:
     try:
         for submission in submission_stream:
-            if submission is None:
-                break
             if not flair_checks(submission):
-                break
+                continue
             table = ['|**Reddit username**|**Account Creation Date**|**Email Verified**|**Reddit Karma**|',
                      '|:-|:-|:-|:-|', '|{}|{}|{}|{}|', '|**{}**|**XBL**|**PSN**|**PC**|', '|{}|{}|{}|{}|',
                      '\n[Follow this link to get verified and get bonus karma. Offer valid only till 03/02/2021]'
@@ -196,7 +194,9 @@ while True:
             reddit_karma = author.comment_karma + author.link_karma
             reddit_karma = readable_number(reddit_karma)
             account_created = author.created_utc
+            # Get when account was created
             date_created = datetime.datetime.fromtimestamp(account_created)
+            # get how long ago was the account created
             account_age = account_age_readable_form(account_created)
             date = '{} - {}'.format(f'{date_created:%D}', account_age)
             table[2] = table[2].format(author.name, date, author.has_verified_email, reddit_karma)
