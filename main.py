@@ -54,15 +54,9 @@ def readable_number(num):
 # Checks if submission is eligible for trading
 # Checks that need to be passed are
 # Submission must have right flair and trade should not be closed
-def flair_checks(comment_or_submission):
-    regex = re.compile('XBOX|PlayStation|PC', re.IGNORECASE)
-    # Check if the object is of submission type otherwise get the submission from comment object
-    if isinstance(comment_or_submission, praw.models.reddit.submission.Submission):
-        submission = comment_or_submission
-    else:
-        submission = comment_or_submission.submission
-    submission_flair_text = submission.link_flair_text
-    match = re.match(regex, str(submission_flair_text))
+def flair_checks(submission):
+    regex = re.compile(r'[\[\{\(](PC|PS4|XB1)[\)\}\]]', re.IGNORECASE)
+    match = re.match(regex, submission.title)
     # If No match found match is None
     if match is None:
         return False
