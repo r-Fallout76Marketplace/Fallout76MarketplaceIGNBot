@@ -180,6 +180,7 @@ def search_in_boards(search_query):
 submission_stream = fallout76marketplace.stream.submissions(skip_existing=True)
 failed_attempt = 1
 
+print("Bot is now live!", time.strftime('%I:%M %p %Z'))
 while True:
     try:
         for submission in submission_stream:
