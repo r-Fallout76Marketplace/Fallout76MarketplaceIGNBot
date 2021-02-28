@@ -181,7 +181,7 @@ while True:
             if not flair_checks(submission):
                 continue
             table = ['|**Reddit username**|**Account Creation Date**|**Email Verified**|**Reddit Karma**|',
-                     '|:-|:-|:-|:-|', '|{}|{}|{}|{}|', '|**{}**|**XBL**|**PSN**|**PC**|', '|{}|{}|{}|{}|',
+                     '|:-|:-|:-|:-|', '|u/{}|{}|{}|{}|', '|**{}**|**XBL**|**PSN**|**PC**|', '|{}|{}|{}|{}|',
                      '\n[Follow this link to get verified and get bonus karma. Offer valid only till 03/02/2021]'
                      '(https://www.reddit.com/r/Fallout76Marketplace/comments/lqvjra/psa_user_verification_bot'
                      '_is_now_live/). **To get all the bot commands summary just comment `!bot commands`**']
