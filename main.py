@@ -174,20 +174,10 @@ while True:
                      '\n**Note: If the the following user is trading with GamerTag that is not listed here. '
                      'Please report it to moderators immediately. To get all the bot commands summary just comment'
                      ' `!bot commands`**']
-            author = submission.author
-            reddit_karma = author.comment_karma + author.link_karma
-            reddit_karma = readable_number(reddit_karma)
-            account_created = author.created_utc
-            # Get when account was created
-            date_created = datetime.datetime.fromtimestamp(account_created)
-            # get how long ago was the account created
-            account_age = account_age_readable_form(account_created)
-            # formatting data in nice string
-            date = '{} - {}'.format(f'{date_created:%D}', account_age)
-            table[2] = table[2].format(author.name, date, author.has_verified_email, reddit_karma)
-            user_flair = submission.author_flair_text
+            # Assume that trading karma is 0
             trading_karma = 0
-            # Only if user has a flair we check for trading karma value
+            # If user has a flair we update the karma value otherwise it remains 0
+            user_flair = submission.author_flair_text
             if user_flair is not None and user_flair != '':
                 user_flair_split = user_flair.split()
                 trading_karma = user_flair_split[-1]
@@ -198,15 +188,33 @@ while True:
                     table[3] = table[3].format(user_flair_split[-2].replace(':', ''))
             else:
                 table[3] = table[3].format('Trading Karma')
+
             # Check if the user is registered
             result = search_in_boards(submission.author.name)
             if len(result) > 0:
                 if result[0].board == user_database:
+                    # Get submission author information
+                    author = submission.author
+                    reddit_karma = author.comment_karma + author.link_karma
+                    # converting karma to readable number e,g 10,000 to 10k
+                    reddit_karma = readable_number(reddit_karma)
+                    account_created = author.created_utc
+                    # Get when account was created
+                    date_created = datetime.datetime.fromtimestamp(account_created)
+                    # get how long ago was the account created
+                    account_age = account_age_readable_form(account_created)
+                    # formatting data in nice string
+                    date = '{} - {}'.format(f'{date_created:%D}', account_age)
+                    table[2] = table[2].format(author.name, date, author.has_verified_email, reddit_karma)
+
+                    # Getting data from trello card description
                     json_data = json.loads(result[0].description)
                     set_platform_flair(submission, json_data)
                     xbl = 'N/A'
                     psn = 'N/A'
                     pc = 'N/A'
+
+                    # Putting the values in table based off the data from description
                     for key, value in json_data.items():
                         if key == 'XBL':
                             xbl = value[0]
@@ -215,16 +223,18 @@ while True:
                         elif key == 'PC':
                             pc = value[0]
                     table[4] = table[4].format(trading_karma, xbl, psn, pc)
-                comment_body = '\n'.join(table)
+                    comment_body = '\n'.join(table)
+                    reply(submission, comment_body)
             else:
                 submission.mod.remove(mod_note='User not registered')
                 comment_body = "Hi u/{}! It seems that you have not registered your IGN/Gamertag in our system. In " \
                                "order to keep you and the community safe. We decided to make the registration " \
-                               "compulsory. It only take a couple of minutes to register. All you need to do is send " \
-                               "me a chat message. I shall provide you the instructions from that point on and within" \
-                               " a matter of minutes. You will be able to trade on this subreddit. Thank you for your" \
-                               " corporation!".format(submission.author.name)
-            reply(submission, comment_body)
+                               "compulsory if you want to trade here. It only take a couple of minutes to register. " \
+                               "All you need to do is send me a chat message. I shall provide you the instructions " \
+                               "from that point on and within a matter of minutes. You will be able to trade on this " \
+                               "subreddit. Thank you for your corporation!".format(submission.author.name)
+                reply(submission, comment_body)
+
     except Exception as stream_exception:
         tb = traceback.format_exc()
         try:
