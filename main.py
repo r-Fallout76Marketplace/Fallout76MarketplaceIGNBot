@@ -84,33 +84,22 @@ def set_platform_flair(submission, json_data):
             return None
         else:
             flair_template_id = submission.author_flair_template_id
-            user_flair_split = user_flair.split()
-            try:
-                user_flair_split[-1] = int(user_flair_split[-1])
-                user_flair_split[-1] += 10
-                user_flair_split[-1] = str(user_flair_split[-1])
-            except ValueError:
-                pass
-            user_flair = ' '.join(user_flair_split)
             if 'XBL' in json_data.keys():
                 user_flair = add_emoji(submission.author, user_flair, flair_template_id, ':xbox:')
             if 'PSN' in json_data.keys():
                 user_flair = add_emoji(submission.author, user_flair, flair_template_id, ':playstation:')
             if 'PC' in json_data.keys():
-                user_flair = add_emoji(submission.author, user_flair, flair_template_id, ':pc:')
-            user_flair_split = user_flair.split()
-            return user_flair_split[-1]
+                add_emoji(submission.author, user_flair, flair_template_id, ':pc:')
     else:
-        user_flair = 'Karma: 10'
+        user_flair = 'Karma: 0'
         flair_template_id = '3c680234-4a4d-11eb-8124-0edd2b620987'
         if 'XBL' in json_data.keys():
             user_flair = add_emoji(submission.author, user_flair, flair_template_id, ':xbox:')
         if 'PSN' in json_data.keys():
             user_flair = add_emoji(submission.author, user_flair, flair_template_id, ':playstation:')
         if 'PC' in json_data.keys():
-            user_flair = add_emoji(submission.author, user_flair, flair_template_id, ':pc:')
-        user_flair_split = user_flair.split()
-        return user_flair_split[-1]
+            add_emoji(submission.author, user_flair, flair_template_id, ':pc:')
+    return None
 
 
 def account_age_readable_form(account_created):
@@ -160,7 +149,7 @@ def search_in_boards(search_query):
         # If underscore is in search query, we need to search it escaped and non escaped
         if "_" in search_query:
             search_result_escaped_underscore = trello_client.search(
-                query=re.escape(search_query.replace("_", "\\_")), cards_limit=10)
+                query=re.escape(search_query.replace("_", "\\_")), cards_limit=1)
         # Adding results from both searches
         search_result = search_result + search_result_escaped_underscore
         # Removing duplicate search results
@@ -182,9 +171,9 @@ while True:
                 continue
             table = ['|**Reddit username**|**Account Creation Date**|**Email Verified**|**Reddit Karma**|',
                      '|:-|:-|:-|:-|', '|u/{}|{}|{}|{}|', '|**{}**|**XBL**|**PSN**|**PC**|', '|{}|{}|{}|{}|',
-                     '\n[Follow this link to get verified and get bonus karma. Offer valid only till 03/02/2021]'
-                     '(https://www.reddit.com/r/Fallout76Marketplace/comments/lqvjra/psa_user_verification_bot'
-                     '_is_now_live/). **To get all the bot commands summary just comment `!bot commands`**']
+                     '\n**Note: If the the following user is trading with GamerTag that is not listed here. '
+                     'Please report it to moderators immediately. To get all the bot commands summary just comment'
+                     ' `!bot commands`**']
             author = submission.author
             reddit_karma = author.comment_karma + author.link_karma
             reddit_karma = readable_number(reddit_karma)
@@ -193,26 +182,28 @@ while True:
             date_created = datetime.datetime.fromtimestamp(account_created)
             # get how long ago was the account created
             account_age = account_age_readable_form(account_created)
+            # formatting data in nice string
             date = '{} - {}'.format(f'{date_created:%D}', account_age)
             table[2] = table[2].format(author.name, date, author.has_verified_email, reddit_karma)
             user_flair = submission.author_flair_text
-            karma = 0
+            trading_karma = 0
+            # Only if user has a flair we check for trading karma value
             if user_flair is not None and user_flair != '':
                 user_flair_split = user_flair.split()
-                karma = user_flair_split[-1]
+                trading_karma = user_flair_split[-1]
+                # For regular users the table says karma otherwise it will say courier, or bot etc...
                 if 'Karma' in user_flair_split[-2]:
                     table[3] = table[3].format('Trading Karma')
                 else:
                     table[3] = table[3].format(user_flair_split[-2].replace(':', ''))
             else:
                 table[3] = table[3].format('Trading Karma')
+            # Check if the user is registered
             result = search_in_boards(submission.author.name)
             if len(result) > 0:
                 if result[0].board == user_database:
                     json_data = json.loads(result[0].description)
-                    output = set_platform_flair(submission, json_data)
-                    if output is not None:
-                        karma = output
+                    set_platform_flair(submission, json_data)
                     xbl = 'N/A'
                     psn = 'N/A'
                     pc = 'N/A'
@@ -223,13 +214,16 @@ while True:
                             psn = value[0]
                         elif key == 'PC':
                             pc = value[0]
-                    table[4] = table[4].format(karma, xbl, psn, pc)
-                    table[5] = '\n**Note: If the the following user is trading with GamerTag that is not listed ' \
-                               'here. Please report it to moderators immediately. To get all the bot commands ' \
-                               'summary just comment `!bot commands`**'
+                    table[4] = table[4].format(trading_karma, xbl, psn, pc)
+                comment_body = '\n'.join(table)
             else:
-                table[4] = table[4].format(karma, 'N/A', 'N/A', 'N/A')
-            comment_body = '\n'.join(table)
+                submission.mod.remove(mod_note='User not registered')
+                comment_body = "Hi u/{}! It seems that you have not registered your IGN/Gamertag in our system. In " \
+                               "order to keep you and the community safe. We decided to make the registration " \
+                               "compulsory. It only take a couple of minutes to register. All you need to do is send " \
+                               "me a chat message. I shall provide you the instructions from that point on and within" \
+                               " a matter of minutes. You will be able to trade on this subreddit. Thank you for your" \
+                               " corporation!".format(submission.author.name)
             reply(submission, comment_body)
     except Exception as stream_exception:
         tb = traceback.format_exc()
@@ -240,7 +234,7 @@ while True:
         except Exception as discord_exception:
             print("Error sending message to discord", str(discord_exception))
 
-            # In case of server error pause for two minutes
+        # In case of server error pause for two minutes
         if isinstance(stream_exception, prawcore.exceptions.ServerError):
             print("Waiting 2 minutes")
             # Try again after a pause
