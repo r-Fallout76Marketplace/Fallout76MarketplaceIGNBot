@@ -25,10 +25,6 @@ trello_client = TrelloClient(
     token=trello_token
 )
 
-boards = trello_client.list_boards()
-blacklist_board = boards[0]
-user_database = boards[1]
-
 
 def reply(comment_or_submission, body):
     # Add disclaimer text
@@ -55,7 +51,7 @@ def readable_number(num):
 # Checks that need to be passed are
 # Submission must have right flair and trade should not be closed
 def flair_checks(submission):
-    regex = re.compile(r'[\[\{\(](PC|PS4|XB1)[\)\}\]]', re.IGNORECASE)
+    regex = re.compile(r'[\[{(](PC|PS4|XB1)[)}\]]', re.IGNORECASE)
     match = re.match(regex, submission.title)
     # If No match found match is None
     if match is None:
@@ -141,7 +137,6 @@ def delete_archived_cards_and_check_desc(search_result, search_query):
 # Searches in trello board using trello api and return the search result in a list\
 # The list is empty if there are no search results
 def search_in_boards(search_query):
-    search_result = list()
     try:
         # escapes the special characters so the search result is exact not from wildcard (e.g '-')
         search_result = trello_client.search(query=re.escape(search_query), cards_limit=1)
@@ -160,94 +155,99 @@ def search_in_boards(search_query):
     return search_result
 
 
-submission_stream = fallout76marketplace.stream.submissions(skip_existing=True)
-failed_attempt = 1
+if __name__ == '__main__':
+    boards = trello_client.list_boards()
+    blacklist_board = boards[0]
+    user_database = boards[1]
 
-print("Bot is now live!", time.strftime('%I:%M %p %Z'))
-while True:
-    try:
-        for submission in submission_stream:
-            if not flair_checks(submission):
-                continue
-            table = ['|**Reddit username**|**Account Creation Date**|**Email Verified**|**Reddit Karma**|',
-                     '|:-|:-|:-|:-|', '|u/{}|{}|{}|{}|', '|**{}**|**XBL**|**PSN**|**PC**|', '|{}|{}|{}|{}|',
-                     '\n**Note: If the the following user is trading with GamerTag that is not listed here. '
-                     'Please report it to moderators immediately. To get all the bot commands summary just comment'
-                     ' `!bot commands`**']
-            # Assume that trading karma is 0
-            trading_karma = 0
-            # If user has a flair we update the karma value otherwise it remains 0
-            user_flair = submission.author_flair_text
-            if user_flair is not None and user_flair != '':
-                user_flair_split = user_flair.split()
-                trading_karma = user_flair_split[-1]
-                # For regular users the table says karma otherwise it will say courier, or bot etc...
-                if 'Karma' in user_flair_split[-2]:
-                    table[3] = table[3].format('Trading Karma')
-                else:
-                    table[3] = table[3].format(user_flair_split[-2].replace(':', ''))
-            else:
-                table[3] = table[3].format('Trading Karma')
+    submission_stream = fallout76marketplace.stream.submissions(skip_existing=True)
+    failed_attempt = 1
 
-            # Check if the user is registered
-            result = search_in_boards(submission.author.name)
-            if len(result) > 0:
-                if result[0].board == user_database:
-                    # Get submission author information
-                    author = submission.author
-                    reddit_karma = author.comment_karma + author.link_karma
-                    # converting karma to readable number e,g 10,000 to 10k
-                    reddit_karma = readable_number(reddit_karma)
-                    account_created = author.created_utc
-                    # Get when account was created
-                    date_created = datetime.datetime.fromtimestamp(account_created)
-                    # get how long ago was the account created
-                    account_age = account_age_readable_form(account_created)
-                    # formatting data in nice string
-                    date = '{} - {}'.format(f'{date_created:%D}', account_age)
-                    table[2] = table[2].format(author.name, date, author.has_verified_email, reddit_karma)
-
-                    # Getting data from trello card description
-                    json_data = json.loads(result[0].description)
-                    set_platform_flair(submission, json_data)
-                    xbl = 'N/A'
-                    psn = 'N/A'
-                    pc = 'N/A'
-
-                    # Putting the values in table based off the data from description
-                    for key, value in json_data.items():
-                        if key == 'XBL':
-                            xbl = value[0]
-                        elif key == 'PSN':
-                            psn = value[0]
-                        elif key == 'PC':
-                            pc = value[0]
-                    table[4] = table[4].format(trading_karma, xbl, psn, pc)
-                    comment_body = '\n'.join(table)
-                    reply(submission, comment_body)
-            else:
-                submission.mod.remove(mod_note='User not registered')
-                comment_body = "Hi u/{}! It seems that you have not registered your IGN/Gamertag in our system. In " \
-                               "order to keep you and the community safe. We decided to make the registration " \
-                               "compulsory if you want to trade here. It only take a couple of minutes to register. " \
-                               "All you need to do is send me a chat message. I shall provide you the instructions " \
-                               "from that point on and within a matter of minutes. You will be able to trade on this " \
-                               "subreddit. Thank you for your corporation!".format(submission.author.name)
-                reply(submission, comment_body)
-
-    except Exception as stream_exception:
-        tb = traceback.format_exc()
+    print("Bot is now live!", time.strftime('%I:%M %p %Z'))
+    while True:
         try:
-            send_message_to_discord(tb)
-            print(tb)
-            # Refreshing Streams
-        except Exception as discord_exception:
-            print("Error sending message to discord", str(discord_exception))
+            for submission in submission_stream:
+                if not flair_checks(submission):
+                    continue
+                table = ['|**Reddit username**|**Account Creation Date**|**Email Verified**|**Reddit Karma**|',
+                         '|:-|:-|:-|:-|', '|u/{}|{}|{}|{}|', '|**{}**|**XBL**|**PSN**|**PC**|', '|{}|{}|{}|{}|',
+                         '\n**Note: If the the following user is trading with GamerTag that is not listed here. '
+                         'Please report it to moderators immediately. To get all the bot commands summary just comment'
+                         ' `!bot commands`**']
+                # Assume that trading karma is 0
+                trading_karma = 0
+                # If user has a flair we update the karma value otherwise it remains 0
+                user_flair = submission.author_flair_text
+                if user_flair is not None and user_flair != '':
+                    user_flair_split = user_flair.split()
+                    trading_karma = user_flair_split[-1]
+                    # For regular users the table says karma otherwise it will say courier, or bot etc...
+                    if 'Karma' in user_flair_split[-2]:
+                        table[3] = table[3].format('Trading Karma')
+                    else:
+                        table[3] = table[3].format(user_flair_split[-2].replace(':', ''))
+                else:
+                    table[3] = table[3].format('Trading Karma')
 
-        # In case of server error pause for two minutes
-        if isinstance(stream_exception, prawcore.exceptions.ServerError):
-            print("Waiting 2 minutes")
-            # Try again after a pause
-            time.sleep(120 * failed_attempt)
-            failed_attempt = failed_attempt + 1
-        submission_stream = fallout76marketplace.stream.submissions(skip_existing=True)
+                # Check if the user is registered
+                result = search_in_boards(submission.author.name)
+                if len(result) > 0:
+                    if result[0].board == user_database:
+                        # Get submission author information
+                        author = submission.author
+                        reddit_karma = author.comment_karma + author.link_karma
+                        # converting karma to readable number e,g 10,000 to 10k
+                        reddit_karma = readable_number(reddit_karma)
+                        account_created = author.created_utc
+                        # Get when account was created
+                        date_created = datetime.datetime.fromtimestamp(account_created)
+                        # get how long ago was the account created
+                        account_age = account_age_readable_form(account_created)
+                        # formatting data in nice string
+                        date = '{} - {}'.format(f'{date_created:%D}', account_age)
+                        table[2] = table[2].format(author.name, date, author.has_verified_email, reddit_karma)
+
+                        # Getting data from trello card description
+                        json_data = json.loads(result[0].description)
+                        set_platform_flair(submission, json_data)
+                        xbl = 'N/A'
+                        psn = 'N/A'
+                        pc = 'N/A'
+
+                        # Putting the values in table based off the data from description
+                        for key, value in json_data.items():
+                            if key == 'XBL':
+                                xbl = value[0]
+                            elif key == 'PSN':
+                                psn = value[0]
+                            elif key == 'PC':
+                                pc = value[0]
+                        table[4] = table[4].format(trading_karma, xbl, psn, pc)
+                        comment_body = '\n'.join(table)
+                        reply(submission, comment_body)
+                else:
+                    submission.mod.remove(mod_note='User not registered')
+                    comment_body = "Hi u/{}! It seems that you have not registered your IGN/Gamertag in our system. " \
+                                   "In order to keep you and the community safe. We decided to make the registration " \
+                                   "compulsory if you want to trade here. It only take a couple of minutes to " \
+                                   "register. All you need to do is send me a chat message. I shall provide you the " \
+                                   "instructions from that point on and within a matter of minutes. You will be able " \
+                                   "to trade on this subreddit. Thank you for your corporation!".format(
+                                    submission.author.name)
+                    reply(submission, comment_body)
+        except Exception as stream_exception:
+            tb = traceback.format_exc()
+            try:
+                send_message_to_discord(tb)
+                print(tb)
+                # Refreshing Streams
+            except Exception as discord_exception:
+                print("Error sending message to discord", str(discord_exception))
+
+            # In case of server error pause for two minutes
+            if isinstance(stream_exception, prawcore.exceptions.ServerError):
+                print("Waiting 2 minutes")
+                # Try again after a pause
+                time.sleep(120 * failed_attempt)
+                failed_attempt = failed_attempt + 1
+            submission_stream = fallout76marketplace.stream.submissions(skip_existing=True)
