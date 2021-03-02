@@ -70,30 +70,30 @@ def add_emoji(redditor, user_flair, flair_template_id, emoji):
     return user_flair
 
 
-def set_platform_flair(comment_or_submission, json_data):
-    user_flair = comment_or_submission.author_flair_text
+def set_platform_flair(submission, json_data):
+    user_flair = submission.author_flair_text
     regex = re.compile('xbox|playstation|pc', re.IGNORECASE)
     if user_flair is not None and user_flair != '':
         match = re.search(regex, str(user_flair))
         if match:
             return None
         else:
-            flair_template_id = comment_or_submission.author_flair_template_id
+            flair_template_id = submission.author_flair_template_id
             if 'XBL' in json_data.keys():
-                user_flair = add_emoji(comment_or_submission.author, user_flair, flair_template_id, ':xbox:')
+                user_flair = add_emoji(submission.author, user_flair, flair_template_id, ':xbox:')
             if 'PSN' in json_data.keys():
-                user_flair = add_emoji(comment_or_submission.author, user_flair, flair_template_id, ':playstation:')
+                user_flair = add_emoji(submission.author, user_flair, flair_template_id, ':playstation:')
             if 'PC' in json_data.keys():
-                add_emoji(comment_or_submission.author, user_flair, flair_template_id, ':pc:')
+                add_emoji(submission.author, user_flair, flair_template_id, ':pc:')
     else:
         user_flair = 'Karma: 0'
         flair_template_id = '3c680234-4a4d-11eb-8124-0edd2b620987'
         if 'XBL' in json_data.keys():
-            user_flair = add_emoji(comment_or_submission.author, user_flair, flair_template_id, ':xbox:')
+            user_flair = add_emoji(submission.author, user_flair, flair_template_id, ':xbox:')
         if 'PSN' in json_data.keys():
-            user_flair = add_emoji(comment_or_submission.author, user_flair, flair_template_id, ':playstation:')
+            user_flair = add_emoji(submission.author, user_flair, flair_template_id, ':playstation:')
         if 'PC' in json_data.keys():
-            add_emoji(comment_or_submission.author, user_flair, flair_template_id, ':pc:')
+            add_emoji(submission.author, user_flair, flair_template_id, ':pc:')
     return None
 
 
