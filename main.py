@@ -24,6 +24,10 @@ trello_client = TrelloClient(
     token=trello_token
 )
 
+boards = trello_client.list_boards()
+blacklist_board = boards[0]
+user_database = boards[1]
+
 
 def reply(comment_or_submission, body):
     # Add disclaimer text
@@ -133,12 +137,14 @@ def delete_archived_cards_and_check_desc(search_result, search_query):
 # The list is empty if there are no search results
 def search_in_boards(search_query):
     # escapes the special characters so the search result is exact not from wildcard (e.g '-')
-    search_result = trello_client.search(query=re.escape(search_query), cards_limit=1, models=['cards'])
+    search_result = trello_client.search(query=re.escape(search_query), cards_limit=1, models=['cards'],
+                                         board_ids=[user_database.id])
     search_result_escaped_underscore = list()
     # If underscore is in search query, we need to search it escaped and non escaped
     if "_" in search_query:
         search_result_escaped_underscore = trello_client.search(
-            query=re.escape(search_query.replace("_", "\\_")), cards_limit=1, models=['cards'])
+            query=re.escape(search_query.replace("_", "\\_")), cards_limit=1, models=['cards'],
+            board_ids=[user_database.id])
     # Adding results from both searches
     search_result = search_result + search_result_escaped_underscore
     # Removing duplicate search results
@@ -170,38 +176,37 @@ def comment_user_profile_on_submission(redditor, submission, trello_card):
     else:
         table[3] = table[3].format('Trading Karma')
 
-    if trello_card[0].board == user_database:
-        # Get submission author information
-        reddit_karma = redditor.comment_karma + redditor.link_karma
-        # converting karma to readable number e,g 10,000 to 10k
-        reddit_karma = readable_number(reddit_karma)
-        account_created = redditor.created_utc
-        # Get when account was created
-        date_created = datetime.datetime.fromtimestamp(account_created)
-        # get how long ago was the account created
-        account_age = account_age_readable_form(account_created)
-        # formatting data in nice string
-        date = '{} - {}'.format(f'{date_created:%D}', account_age)
-        table[2] = table[2].format(redditor.name, date, redditor.has_verified_email, reddit_karma)
+    # Get submission author information
+    reddit_karma = redditor.comment_karma + redditor.link_karma
+    # converting karma to readable number e,g 10,000 to 10k
+    reddit_karma = readable_number(reddit_karma)
+    account_created = redditor.created_utc
+    # Get when account was created
+    date_created = datetime.datetime.fromtimestamp(account_created)
+    # get how long ago was the account created
+    account_age = account_age_readable_form(account_created)
+    # formatting data in nice string
+    date = '{} - {}'.format(f'{date_created:%D}', account_age)
+    table[2] = table[2].format(redditor.name, date, redditor.has_verified_email, reddit_karma)
 
-        # Getting data from trello card description
-        json_data = json.loads(trello_card[0].description)
-        set_platform_flair(submission, json_data)
-        xbl = 'N/A'
-        psn = 'N/A'
-        pc = 'N/A'
+    # Getting data from trello card description
+    json_data = json.loads(trello_card[0].description)
+    set_platform_flair(submission, json_data)
+    xbl = 'N/A'
+    psn = 'N/A'
+    pc = 'N/A'
 
-        # Putting the values in table based off the data from description
-        for key, value in json_data.items():
-            if key == 'XBL':
-                xbl = value[0]
-            elif key == 'PSN':
-                psn = value[0]
-            elif key == 'PC':
-                pc = value[0]
-        table[4] = table[4].format(trading_karma, xbl, psn, pc)
-        comment_body = '\n'.join(table)
-        reply(submission, comment_body)
+    # Putting the values in table based off the data from description
+    for key, value in json_data.items():
+        if key == 'XBL':
+            xbl = value[0]
+        elif key == 'PSN':
+            psn = value[0]
+        elif key == 'PC':
+            pc = value[0]
+    table[4] = table[4].format(trading_karma, xbl, psn, pc)
+    comment_body = '\n'.join(table)
+    reply(submission, comment_body)
 
 
 def comment_user_profile(redditor, comment, trello_card):
@@ -210,7 +215,7 @@ def comment_user_profile(redditor, comment, trello_card):
         '\n^(Note: If the the following user is trading with GamerTag that is not listed here. Please report it '
         'to moderators immediately.)'
     ]
-    if len(trello_card) > 0 and trello_card[0].board == user_database:
+    if len(trello_card) > 0:
         # Getting data from trello card description
         json_data = json.loads(trello_card[0].description)
         xbl = 'N/A'
@@ -248,10 +253,6 @@ def remove_content_from_unregistered_user(comment_or_submission):
 
 
 if __name__ == '__main__':
-    boards = trello_client.list_boards()
-    blacklist_board = boards[0]
-    user_database = boards[1]
-
     # Gets 100 historical comments
     comment_stream = fallout76marketplace.stream.comments(pause_after=-1, skip_existing=True)
     # Gets 100 historical submission
