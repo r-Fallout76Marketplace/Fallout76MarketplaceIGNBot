@@ -53,8 +53,8 @@ def readable_number(num):
 # Checks if submission is eligible for trading
 # Checks that need to be passed are
 # Submission must have right flair and trade should not be closed
-def flair_checks(submission):
-    regex = re.compile(r'[\[{(](PC|PS4|XB1)[)}\]]', re.IGNORECASE)
+def submission_checks(submission):
+    regex = re.compile(r'(?!.*price\s?check)[\[{(](PC|PS4|XB1)[)}\]]', re.IGNORECASE)
     match = re.match(regex, submission.title)
     # If No match found match is None
     if match is None:
@@ -287,7 +287,7 @@ if __name__ == '__main__':
                 if len(result) <= 0:
                     remove_content_from_unregistered_user(submission)
                 else:
-                    if flair_checks(submission):
+                    if submission_checks(submission):
                         comment_user_profile_on_submission(submission.author, submission, result)
 
         except Exception as stream_exception:
