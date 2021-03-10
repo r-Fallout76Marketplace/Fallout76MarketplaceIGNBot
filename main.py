@@ -243,13 +243,21 @@ def comment_user_profile(redditor, comment, trello_card):
 # Remove all the stuff posted by unregistered users
 def remove_content_from_unregistered_user(comment_or_submission):
     comment_or_submission.mod.remove(mod_note='User not registered')
-    message_body = "Hi u/{}! It seems that you have not registered your IGN/Gamertag in our system. In order to keep " \
-                   "you and the community safe. We decided to make the registration compulsory if you want to trade " \
-                   "here. It only take a couple of minutes to register. All you need to do is send me a " \
-                   "[chat message](https://www.reddit.com/chat/). I shall provide you the instructions from that " \
-                   "point on and within a matter of minutes. You will be able to trade on this subreddit. Thank you " \
-                   "for your corporation!".format(comment_or_submission.author.name)
-    comment_or_submission.author.message('Please register your GT!', message_body)
+    message_body = "## Your submission/comment was removed\n"
+    message_body += "### Why it was removed?\n"
+    message_body += "Hi u/{}! It seems that you have not registered your IGN/Gamertag in our system. In order to " \
+                    "keep you and the community safe. We decided to make the registration compulsory if you want " \
+                    "to trade here.\n\n".format(comment_or_submission.author.name)
+    message_body += "### How to register?\n"
+    message_body += "The registration is very easy and will take only a couple of minutes. All you need to do is " \
+                    "send me (u/Fallout76MktPlBot) a [chat message](https://www.reddit.com/chat/). I shall provide " \
+                    "you the instructions from that point on and within a matter of minutes. You will be able to " \
+                    "trade on this subreddit.\n"
+    message_body += "\nThank you for your corporation!\n\nr/Fallout76Markerplace\n\n"
+    message_body += "If you have any question. Please send us a " \
+                    "[modmail](https://www.reddit.com/message/compose?to=/r/Fallout76Marketplace). " \
+                    "This is a bot account and replies may not get read."
+    comment_or_submission.author.message('Your submission/comment was removed', message_body)
 
 
 if __name__ == '__main__':
