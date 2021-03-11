@@ -244,6 +244,7 @@ def comment_user_profile(redditor, comment, trello_card):
 def remove_content_from_unregistered_user(comment_or_submission):
     comment_or_submission.mod.remove(mod_note='User not registered')
     message_body = "## Your submission/comment was removed\n"
+    message_body += "[Submission/Comment URL](https://www.reddit.com{})\n".format(comment_or_submission.permalink)
     message_body += "### Why it was removed?\n"
     message_body += "Hi u/{}! It seems that you have not registered your IGN/Gamertag in our system. In order to " \
                     "keep you and the community safe. We decided to make the registration compulsory if you want " \
@@ -253,11 +254,15 @@ def remove_content_from_unregistered_user(comment_or_submission):
                     "send me (u/Fallout76MktPlBot) a [chat message](https://www.reddit.com/chat/). I shall provide " \
                     "you the instructions from that point on and within a matter of minutes. You will be able to " \
                     "trade on this subreddit.\n"
-    message_body += "\nThank you for your corporation!\n\nr/Fallout76Markerplace\n\n"
+    message_body += "\nThank you for your corporation!\n\nr/Fallout76Marketplace\n\n"
     message_body += "If you have any question. Please send us a " \
                     "[modmail](https://www.reddit.com/message/compose?to=/r/Fallout76Marketplace). " \
                     "This is a bot account and replies may not get read."
-    comment_or_submission.author.message('Your submission/comment was removed', message_body)
+    try:
+        comment_or_submission.author.message('Your submission/comment was removed', message_body)
+    except Exception as private_message_only:
+        print(private_message_only)
+        comment_or_submission.reply(message_body)
 
 
 if __name__ == '__main__':
