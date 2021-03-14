@@ -137,13 +137,13 @@ def delete_archived_cards_and_check_desc(search_result, search_query):
 # The list is empty if there are no search results
 def search_in_boards(search_query):
     # escapes the special characters so the search result is exact not from wildcard (e.g '-')
-    search_result = trello_client.search(query=re.escape(search_query), cards_limit=1, models=['cards'],
-                                         board_ids=[user_database.id])
+    search_result = trello_client.search(query='name:u/{}'.format(re.escape(search_query)), cards_limit=1,
+                                         models=['cards'], board_ids=[user_database.id])
     search_result_escaped_underscore = list()
     # If underscore is in search query, we need to search it escaped and non escaped
     if "_" in search_query:
         search_result_escaped_underscore = trello_client.search(
-            query=re.escape(search_query.replace("_", "\\_")), cards_limit=1, models=['cards'],
+            query='name:u/{}'.format(re.escape(search_query.replace("_", "\\_"))), cards_limit=1, models=['cards'],
             board_ids=[user_database.id])
     # Adding results from both searches
     search_result = search_result + search_result_escaped_underscore
