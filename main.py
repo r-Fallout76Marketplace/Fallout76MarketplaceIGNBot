@@ -122,13 +122,10 @@ def send_message_to_discord(message_param):
 
 
 # Removes the archived cards from list
-def delete_archived_cards_and_check_desc(search_result, search_query):
+def delete_archived_cards(search_result):
     for card in search_result:
         # If Card is archived remove it
         if card.closed:
-            search_result.remove(card)
-        # Double check to make sure that search query is in card description
-        elif search_query.lower() not in card.description.lower().replace('\\', ''):
             search_result.remove(card)
     return search_result
 
@@ -149,7 +146,7 @@ def search_in_boards(search_query):
     search_result = search_result + search_result_escaped_underscore
     # Removing duplicate search results
     search_result = list(set(search_result))
-    search_result = delete_archived_cards_and_check_desc(search_result, search_query)
+    search_result = delete_archived_cards(search_result)
     return search_result
 
 
