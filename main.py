@@ -24,10 +24,6 @@ trello_client = TrelloClient(
     token=trello_token
 )
 
-boards = trello_client.list_boards()
-blacklist_board = boards[0]
-user_database = boards[1]
-
 
 def reply(comment_or_submission, body):
     # Add disclaimer text
@@ -135,13 +131,12 @@ def delete_archived_cards(search_result):
 def search_in_boards(search_query):
     # escapes the special characters so the search result is exact not from wildcard (e.g '-')
     search_result = trello_client.search(query='name:u/{}'.format(re.escape(search_query)), cards_limit=1,
-                                         models=['cards'], board_ids=[user_database.id])
+                                         models=['cards'])
     search_result_escaped_underscore = list()
     # If underscore is in search query, we need to search it escaped and non escaped
     if "_" in search_query:
         search_result_escaped_underscore = trello_client.search(
-            query='name:u/{}'.format(re.escape(search_query.replace("_", "\\_"))), cards_limit=1, models=['cards'],
-            board_ids=[user_database.id])
+            query='name:u/{}'.format(re.escape(search_query.replace("_", "\\_"))), cards_limit=1, models=['cards'])
     # Adding results from both searches
     search_result = search_result + search_result_escaped_underscore
     # Removing duplicate search results
@@ -254,7 +249,8 @@ def remove_content_from_unregistered_user(comment_or_submission):
     message_body += "\nThank you for your corporation!\n\nr/Fallout76Marketplace\n\n"
     message_body += "If you have any question. Please send us a " \
                     "[modmail](https://www.reddit.com/message/compose?to=/r/Fallout76Marketplace). " \
-                    "This is a bot account and replies may not get read."
+                    "**Do not reply your GT to this message. This is inbox message not chat message.**"
+    message_body += "# [Where is chat button located?](https://imgur.com/a/MVFJcXH)"
     try:
         comment_or_submission.author.message('Your submission/comment was removed', message_body)
     except Exception as private_message_only:
