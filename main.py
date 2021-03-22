@@ -249,7 +249,7 @@ def remove_content_from_unregistered_user(comment_or_submission):
     message_body += "\nThank you for your corporation!\n\nr/Fallout76Marketplace\n\n"
     message_body += "If you have any question. Please send us a " \
                     "[modmail](https://www.reddit.com/message/compose?to=/r/Fallout76Marketplace). " \
-                    "**Do not reply your GT to this message. This is inbox message not chat message.**\n\n"
+                    "**Do not reply your GT to this message. This is inbox message not chat message.**\n"
     message_body += "# [Where is chat button located?](https://imgur.com/a/MVFJcXH)"
     try:
         comment_or_submission.author.message('Your submission/comment was removed', message_body)
