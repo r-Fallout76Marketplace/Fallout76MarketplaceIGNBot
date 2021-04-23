@@ -301,7 +301,7 @@ if __name__ == '__main__':
         except Exception as stream_exception:
             tb = traceback.format_exc()
             try:
-                send_message_to_discord(tb)
+                #send_message_to_discord(tb)
                 print(tb)
                 # Refreshing Streams
             except Exception as discord_exception:
