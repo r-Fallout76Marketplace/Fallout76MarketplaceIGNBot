@@ -8,15 +8,17 @@ import traceback
 import praw
 import prawcore
 import requests
-from dotenv import load_dotenv
 from trello import TrelloClient
 
-load_dotenv()
-reddit = praw.Reddit('UserVerificationBot')
+reddit = praw.Reddit(client_id=os.environ['client_id'],
+                     client_secret=os.environ['client_secret'],
+                     username=os.environ['username'],
+                     password=os.environ['password'],
+                     user_agent=os.environ['user_agent'])
 fallout76marketplace = reddit.subreddit("Fallout76Marketplace")
-trello_api_key = os.getenv('TRELLO_API_KEY')
-trello_api_secret = os.getenv('TRELLO_API_SECRET')
-trello_token = os.getenv('TRELLO_TOKEN')
+trello_api_key = os.environ['TRELLO_API_KEY']
+trello_api_secret = os.environ['TRELLO_API_SECRET']
+trello_token = os.environ['TRELLO_TOKEN']
 
 trello_client = TrelloClient(
     api_key=trello_api_key,
