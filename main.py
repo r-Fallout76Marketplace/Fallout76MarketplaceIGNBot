@@ -113,7 +113,7 @@ def account_age_readable_form(account_created):
 
 # Send message to discord channel
 def send_message_to_discord(message_param):
-    webhook = os.getenv('ERROR_CHANNEL')
+    webhook = os.environ['ERROR_CHANNEL']
     data = {"content": message_param, "username": 'IGNBot'}
     output = requests.post(webhook, data=json.dumps(data), headers={"Content-Type": "application/json"})
     output.raise_for_status()
