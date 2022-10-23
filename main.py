@@ -127,6 +127,20 @@ def set_platform_flair(reddit_post: Submission | Comment, user_info: dict):
         fallout76marketplace.flair.set(reddit_post.author.name, text=user_flair, flair_template_id=flair_template_id)
 
 
+def check_user_in_blacklist(reddit_post: Submission | Comment, user_data: dict):
+    filtered_data: list[Platform] = [Platform("Reddit", user_data['key']),
+                                     Platform("PC", user_data.get('Fallout 76')),
+                                     Platform("PS4", user_data.get('PlayStation')),
+                                     Platform("PS4", user_data.get('PlayStation_ID')),
+                                     Platform("XB1", user_data.get('XBOX')),
+                                     Platform("XB1", user_data.get('XBOX_ID'))]
+    result = search_multiple_items_blacklist([data for data in filtered_data if data.value is not None])
+    if result:
+        user_data |= {"is_blacklisted": True}
+        update_item(user_data, user_data['key'])
+        reddit_post.mod.remove(mod_note='User blacklisted')
+
+
 def search_user_in_db(reddit_post: Submission | Comment):
     my_logger.info(f"{reddit_post.author.name} {type(reddit_post)} {reddit_post.id}")
     deta = Deta(getenv('DETA_PROJECT_KEY'))
@@ -137,22 +151,13 @@ def search_user_in_db(reddit_post: Submission | Comment):
         remove_content_from_unregistered_user(reddit_post)
     else:
         user_data: dict = fetch_res.items[0]
-        filtered_data: list[Platform] = [Platform("Reddit", user_data['key']),
-                                         Platform("PC", user_data.get('Fallout 76')),
-                                         Platform("PS4", user_data.get('PlayStation')),
-                                         Platform("PS4", user_data.get('PlayStation_ID')),
-                                         Platform("XB1", user_data.get('XBOX')),
-                                         Platform("XB1", user_data.get('XBOX_ID'))]
-        result = search_multiple_items_blacklist([data for data in filtered_data if data.value is not None])
-        is_blacklisted = user_data.get("is_blacklisted") or result
-        if is_blacklisted:
-            user_data |= {"is_blacklisted": is_blacklisted}
-            update_item(user_data, user_data['key'])
+        if user_data.get("is_blacklisted"):
             send_message_to_discord(f"Blacklisted user u/{reddit_post.author.name} tried to post. <https://www.reddit.com{reddit_post.permalink}>",
                                     getenv('MOD_CHANNEL'))
 
             reddit_post.mod.remove(mod_note='User blacklisted')
         elif user_data.get("verification_complete"):
+            check_user_in_blacklist(reddit_post, user_data)
             set_platform_flair(reddit_post, user_data)
         else:
             remove_content_from_unregistered_user(reddit_post)
