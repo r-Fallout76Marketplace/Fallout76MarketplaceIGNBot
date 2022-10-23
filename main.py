@@ -114,11 +114,11 @@ def set_platform_flair(reddit_post: Submission | Comment, user_info: dict):
 
 
 def search_user_in_db(reddit_post: Submission | Comment):
-    my_logger.info(f"{reddit_post.author.name} {reddit_post.id}")
+    my_logger.info(f"{reddit_post.author.name} {type(reddit_post)} {reddit_post.id}")
     deta = Deta(getenv('DETA_PROJECT_KEY'))
     fallout_76_db = deta.Base("fallout_76_db")
     fetch_res = fallout_76_db.fetch({"key": reddit_post.author.name.lower()})
-    my_logger.info(fetch_res)
+    my_logger.info(fetch_res.items)
     if fetch_res.count == 0:
         remove_content_from_unregistered_user(reddit_post)
     else:
