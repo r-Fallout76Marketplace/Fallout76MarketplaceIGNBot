@@ -127,8 +127,10 @@ def search_user_in_db(reddit_post: Submission | Comment):
             send_message_to_discord(f"Blacklisted user u/{reddit_post.author.name} tried to post. <https://www.reddit.com{reddit_post.permalink}>",
                                     getenv('MOD_CHANNEL'))
             reddit_post.mod.remove(mod_note='User blacklisted')
-        else:
+        elif user_info.get("verification_complete"):
             set_platform_flair(reddit_post, user_info)
+        else:
+            remove_content_from_unregistered_user(reddit_post)
 
 
 def main():
