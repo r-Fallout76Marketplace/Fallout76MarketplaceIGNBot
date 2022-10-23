@@ -6,6 +6,7 @@ import traceback
 from datetime import datetime
 from logging.handlers import TimedRotatingFileHandler
 from os import getenv
+from typing import NamedTuple, Optional
 
 import praw
 import prawcore
@@ -15,7 +16,14 @@ from dotenv import load_dotenv
 from praw.models import Comment
 from praw.models import Submission
 
+from trello_api import search_multiple_items_blacklist
+
 load_dotenv()
+
+
+class Platform(NamedTuple):
+    platform_type: str
+    value: Optional[str]
 
 
 def create_logger(module_name: str, level: int | str = logging.INFO) -> logging.Logger:
@@ -122,13 +130,21 @@ def search_user_in_db(reddit_post: Submission | Comment):
     if fetch_res.count == 0:
         remove_content_from_unregistered_user(reddit_post)
     else:
-        user_info: dict = fetch_res.items[0]
-        if user_info.get("is_blacklisted"):
+        user_data: dict = fetch_res.items[0]
+        filtered_data: list[Platform] = [Platform("Reddit", user_data['key']),
+                                         Platform("PC", user_data.get('Fallout 76')),
+                                         Platform("PS4", user_data.get('PlayStation')),
+                                         Platform("PS4", user_data.get('PlayStation_ID')),
+                                         Platform("XB1", user_data.get('XBOX')),
+                                         Platform("XB1", user_data.get('XBOX_ID'))]
+        result = search_multiple_items_blacklist([data for data in filtered_data if data.value is not None])
+        is_blacklisted = user_data.get("is_blacklisted") or result
+        if is_blacklisted:
             send_message_to_discord(f"Blacklisted user u/{reddit_post.author.name} tried to post. <https://www.reddit.com{reddit_post.permalink}>",
                                     getenv('MOD_CHANNEL'))
             reddit_post.mod.remove(mod_note='User blacklisted')
-        elif user_info.get("verification_complete"):
-            set_platform_flair(reddit_post, user_info)
+        elif user_data.get("verification_complete"):
+            set_platform_flair(reddit_post, user_data)
         else:
             remove_content_from_unregistered_user(reddit_post)
 
