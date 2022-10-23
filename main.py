@@ -74,6 +74,12 @@ def send_message_to_discord(message_param, webhook):
         my_logger.exception(http_err, exc_info=True)
 
 
+def update_item(data: dict, key: str):
+    deta = Deta(getenv('DETA_PROJECT_KEY'))
+    fallout_76_db = deta.Base("fallout_76_db")
+    fallout_76_db.put(data, key)
+
+
 # Remove all the stuff posted by unregistered users
 def remove_content_from_unregistered_user(reddit_post):
     message_body = \
@@ -140,8 +146,11 @@ def search_user_in_db(reddit_post: Submission | Comment):
         result = search_multiple_items_blacklist([data for data in filtered_data if data.value is not None])
         is_blacklisted = user_data.get("is_blacklisted") or result
         if is_blacklisted:
+            user_data |= {"is_blacklisted": is_blacklisted}
+            update_item(user_data, user_data['key'])
             send_message_to_discord(f"Blacklisted user u/{reddit_post.author.name} tried to post. <https://www.reddit.com{reddit_post.permalink}>",
                                     getenv('MOD_CHANNEL'))
+
             reddit_post.mod.remove(mod_note='User blacklisted')
         elif user_data.get("verification_complete"):
             set_platform_flair(reddit_post, user_data)
@@ -155,7 +164,7 @@ def main():
     # Gets 100 historical submission
     submission_stream = fallout76marketplace.stream.submissions(pause_after=-1, skip_existing=True)
 
-    my_logger.info(f"Bot is now live! {datetime.now(): %I:%M %p %Z}")
+    my_logger.info(f"Bot is now live! {datetime.now():%I:%M %p %Z}")
     failed_attempt = 1
     while True:
         try:
