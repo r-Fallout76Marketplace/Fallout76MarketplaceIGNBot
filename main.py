@@ -3,6 +3,7 @@ import logging
 import re
 import time
 import traceback
+from datetime import datetime
 from logging.handlers import TimedRotatingFileHandler
 from os import getenv
 
@@ -89,10 +90,10 @@ r/Fallout76Marketplace
 """
     reddit_post.mod.remove(mod_note='User not registered')
     try:
-        reddit_post.author.message('Your submission/comment was removed', message_body)
+        reddit_post.author.message(subject='Your submission/comment was removed', message=message_body)
     except Exception as private_message_only:
         print(private_message_only)
-        reddit_post.reply(message_body)
+        reddit_post.reply(body=message_body)
 
 
 def set_platform_flair(reddit_post: Submission | Comment, user_info: dict):
@@ -136,7 +137,7 @@ def main():
     # Gets 100 historical submission
     submission_stream = fallout76marketplace.stream.submissions(pause_after=-1, skip_existing=True)
 
-    my_logger.info("Bot is now live!", time.strftime('%I:%M %p %Z'))
+    my_logger.info(f"Bot is now live! {datetime.now(): %I:%M %p %Z}")
     failed_attempt = 1
     while True:
         try:
