@@ -63,7 +63,7 @@ def send_message_to_discord(message_param, webhook):
     try:
         output.raise_for_status()
     except requests.HTTPError as http_err:
-        print(http_err)
+        my_logger.exception(http_err, exc_info=True)
 
 
 # Remove all the stuff posted by unregistered users
@@ -91,16 +91,16 @@ r/Fallout76Marketplace
     reddit_post.mod.remove(mod_note='User not registered')
     try:
         reddit_post.author.message(subject='Your submission/comment was removed', message=message_body)
-    except Exception as private_message_only:
-        print(private_message_only)
+    except Exception:
+        my_logger.exception("Can't send message to user", exc_info=True)
         reddit_post.reply(body=message_body)
 
 
 def set_platform_flair(reddit_post: Submission | Comment, user_info: dict):
-    logging.info(f"{reddit_post.author_flair_text} {reddit_post.author_flair_template_id}")
+    my_logger.info(f"{reddit_post.author_flair_text} {reddit_post.author_flair_template_id}")
     user_flair = reddit_post.author_flair_text or 'Karma: 0'
     flair_template_id = reddit_post.author_flair_template_id or '3c680234-4a4d-11eb-8124-0edd2b620987'
-    logging.info(f"{user_flair} {flair_template_id}")
+    my_logger.info(f"{user_flair} {flair_template_id}")
     match = re.search(r'xbox|playstation|pc', str(user_flair))
     if match is None:
         if user_info.get("XBOX"):
@@ -109,7 +109,7 @@ def set_platform_flair(reddit_post: Submission | Comment, user_info: dict):
             user_flair = f":playstation: {user_flair}"
         if user_info.get("Fallout 76"):
             user_flair = f":pc: {user_flair}"
-        logging.info(f"{user_flair} {flair_template_id}")
+        my_logger.info(f"{user_flair} {flair_template_id}")
         fallout76marketplace.flair.set(reddit_post.author.name, text=user_flair, flair_template_id=flair_template_id)
 
 
@@ -156,9 +156,8 @@ def main():
                 search_user_in_db(submission)
 
         except Exception as stream_exception:
-            tb = traceback.format_exc()
-            send_message_to_discord(tb, getenv('ERROR_CHANNEL'))
-            print(tb)
+            send_message_to_discord(traceback.format_exc(), getenv('ERROR_CHANNEL'))
+            my_logger.exception("Stream Exception", exc_info=True)
             # In case of server error pause for two minutes
             if isinstance(stream_exception, prawcore.exceptions.ServerError):
                 print("Waiting 2 minutes")
