@@ -72,7 +72,7 @@ def search_in_blacklist(search_query: "Platform") -> list[Card]:
     )
     m76_board = trello_client.get_board("0eCDKYHr")
     fo76_board = trello_client.get_board("8oCsXC2j")
-    search_result = trello_client.search(query=search_query.value, board_ids=[m76_board.id, fo76_board.id], cards_limit=1000)
+    search_result = trello_client.search(query=search_query.value, board_ids=[m76_board.id, fo76_board.id], models=['cards'], cards_limit=1000)
     search_result = filter_search_result(search_result=search_result, search_query=search_query)
     return search_result
 
