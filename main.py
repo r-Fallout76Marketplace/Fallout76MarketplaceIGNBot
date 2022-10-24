@@ -71,7 +71,7 @@ def auto_responder():
 
 
 def auto_responder_scheduler():
-    schedule.every(30).minute.do(auto_responder)
+    schedule.every(30).minutes.do(auto_responder)
     my_logger.info("Scheduled the auto_responder")
     while True:
         schedule.run_pending()
