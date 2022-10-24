@@ -11,6 +11,7 @@ from typing import NamedTuple, Optional
 import praw
 import prawcore
 import requests
+import yaml
 from deta import Deta
 from dotenv import load_dotenv
 from praw.models import Comment
@@ -141,6 +142,16 @@ def check_user_in_blacklist(reddit_post: Submission | Comment, user_data: dict):
         reddit_post.mod.remove(mod_note='User blacklisted')
 
 
+def check_if_exempted(reddit_username: str):
+    wiki = fallout76marketplace.wiki["custom_bot_config/user_verification"]
+    yaml_format = yaml.safe_load(wiki.content_md)
+    exemption_list = [x.lower() for x in yaml_format['exempted']]
+    if reddit_username in exemption_list:
+        return True
+    else:
+        return False
+
+
 def search_user_in_db(reddit_post: Submission | Comment):
     my_logger.info(f"{reddit_post.author.name} {type(reddit_post)} {reddit_post.id}")
     deta = Deta(getenv('DETA_PROJECT_KEY'))
@@ -157,7 +168,8 @@ def search_user_in_db(reddit_post: Submission | Comment):
 
             reddit_post.mod.remove(mod_note='User blacklisted')
         elif user_data.get("verification_complete"):
-            check_user_in_blacklist(reddit_post, user_data)
+            if not check_if_exempted(reddit_post.author.name.lower()):
+                check_user_in_blacklist(reddit_post, user_data)
             set_platform_flair(reddit_post, user_data)
         else:
             remove_content_from_unregistered_user(reddit_post)
