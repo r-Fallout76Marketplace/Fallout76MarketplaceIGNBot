@@ -153,7 +153,7 @@ def search_user_in_db(reddit_post: Submission | Comment):
         user_data: dict = fetch_res.items[0]
         if user_data.get("is_blacklisted"):
             send_message_to_discord(f"Blacklisted user u/{reddit_post.author.name} tried to post. <https://www.reddit.com{reddit_post.permalink}>",
-                                    getenv('MOD_CHANNEL'))
+                                    getenv('USER_VERIFICATION_CHANNEL'))
 
             reddit_post.mod.remove(mod_note='User blacklisted')
         elif user_data.get("verification_complete"):
