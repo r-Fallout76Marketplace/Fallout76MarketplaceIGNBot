@@ -6,15 +6,18 @@ import traceback
 from datetime import datetime
 from logging.handlers import TimedRotatingFileHandler
 from os import getenv
+from threading import Thread
 from typing import NamedTuple, Optional
 
 import praw
 import prawcore
 import requests
+import schedule
 import yaml
 from deta import Deta
 from dotenv import load_dotenv
 from praw.models import Comment
+from praw.models import Message
 from praw.models import Submission
 
 from trello_api import search_multiple_items_blacklist
@@ -50,6 +53,29 @@ def create_logger(module_name: str, level: int | str = logging.INFO) -> logging.
     logger.addHandler(file_stream)
     logger.propagate = False
     return logger
+
+
+def auto_responder():
+    reddit_2 = praw.Reddit(client_id=getenv('CLIENT_ID'),
+                           client_secret=getenv('CLIENT_SECRET'),
+                           username=getenv('REDDIT_USERNAME'),
+                           password=getenv('PASSWORD'),
+                           user_agent="IGNBot by u/Vault-TecTradingCo")
+
+    my_logger.info("Running the auto_responder")
+    for item in reddit_2.inbox.unread(limit=None):
+        if isinstance(item, Message):
+            item.reply(body="This is a bot account, therefore your messages will not get read by one. For any concerns send us modmail "
+                            "https://www.reddit.com/message/compose?to=/r/Fallout76Marketplace")
+            item.mark_read()
+
+
+def auto_responder_scheduler():
+    schedule.every(30).minute.do(auto_responder)
+    my_logger.info("Scheduled the auto_responder")
+    while True:
+        schedule.run_pending()
+        time.sleep(5)
 
 
 def reply(comment_or_submission, body):
@@ -176,6 +202,8 @@ def search_user_in_db(reddit_post: Submission | Comment):
 
 
 def main():
+    auto_resp_thread = Thread(target=auto_responder_scheduler)
+    auto_resp_thread.start()
     # Gets 100 historical comments
     comment_stream = fallout76marketplace.stream.comments(pause_after=-1, skip_existing=True)
     # Gets 100 historical submission
