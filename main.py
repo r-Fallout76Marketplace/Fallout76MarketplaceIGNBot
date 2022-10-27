@@ -65,7 +65,7 @@ def auto_responder():
     my_logger.info("Running the auto_responder")
     for item in reddit_2.inbox.unread(limit=None):
         if isinstance(item, Message):
-            item.reply(body="This is a bot account, therefore your messages will not get read by one. For any concerns send us modmail "
+            item.reply(body="This is a bot account, therefore your messages will not get read by anyone. For any concerns send us modmail "
                             "https://www.reddit.com/message/compose?to=/r/Fallout76Marketplace")
             item.mark_read()
 
