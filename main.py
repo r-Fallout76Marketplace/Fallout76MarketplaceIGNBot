@@ -203,6 +203,7 @@ def search_user_in_db(reddit_post: Submission | Comment):
 
 def main():
     auto_resp_thread = Thread(target=auto_responder_scheduler)
+    auto_resp_thread.daemon = True
     auto_resp_thread.start()
     # Gets 100 historical comments
     comment_stream = fallout76marketplace.stream.comments(pause_after=-1, skip_existing=True)
