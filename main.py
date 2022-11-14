@@ -56,6 +56,7 @@ def create_logger(module_name: str, level: int | str = logging.INFO) -> logging.
 
 
 def auto_responder():
+    my_logger.info("Running the auto_responder")
     reddit_2 = praw.Reddit(client_id=getenv('CLIENT_ID'),
                            client_secret=getenv('CLIENT_SECRET'),
                            username=getenv('REDDIT_USERNAME'),
