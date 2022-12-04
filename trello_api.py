@@ -42,14 +42,17 @@ def filter_search_result(search_result: list[Card], search_query: "Platform") ->
         # closed means the card is archived
         if card.closed:
             search_result.remove(card)
+            continue
 
         # Remove cards that are from other platforms
         if search_query.platform_type != "Reddit":
             if search_query.platform_type not in card.name.upper():
                 search_result.remove(card)
+                continue
 
         if not is_in_description(card.desc, search_query.value):
             search_result.remove(card)
+            continue
 
         for label in card.labels:
             if label.name.lower() == 'scamming':
